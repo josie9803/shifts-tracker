@@ -1,6 +1,6 @@
 // src/components/JobTracker.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import JobCard from './JobCard';
 import JobModal from './JobModal';
 import ScheduleModal from './ScheduleModal';
@@ -10,6 +10,12 @@ export interface JobEntry {
   jobName: string;
   companyName: string;
   hourlyRate: number;
+  startDate: string;
+  endDate?: string; // Add endDate here
+  jobLocation: string;
+  hoursPerWeek: number;
+  paymentCycle: string;
+  notes?: string;
   schedules?: { date: string; startTime: string; endTime: string }[];
 }
 
@@ -17,13 +23,30 @@ const JobTracker: React.FC = () => {
   const [jobs, setJobs] = useState<JobEntry[]>([]);
   const [showJobModal, setShowJobModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false); // New state for edit modal
+  const [showEditScheduleModal, setShowEditScheduleModal] = useState(false); // Add state for Edit Modal
   const [selectedJobIndex, setSelectedJobIndex] = useState<number | null>(null);
-  const [selectedScheduleIndex, setSelectedScheduleIndex] = useState<number | null>(null); // New state for selected schedule
+  const [editedSchedule, setEditedSchedule] = useState<{ date: string; startTime: string; endTime: string } | null>(null);
 
+  // Load jobs once when the component mounts
+  useEffect(() => {
+    const storedJobs = localStorage.getItem('jobs');
+    if (storedJobs) {
+      setJobs(JSON.parse(storedJobs));
+    }
+  }, []);
+
+  // Function to add job and update local storage
   const addJob = (newJob: JobEntry) => {
-    setJobs([...jobs, newJob]);
-    setShowJobModal(false);
+  const updatedJobs = [...jobs, newJob];
+  setJobs(updatedJobs);
+  localStorage.setItem('jobs', JSON.stringify(updatedJobs)); // Save updated jobs
+  };
+
+  // Function to delete a job and update local storage
+  const deleteJob = (index: number) => {
+    const updatedJobs = jobs.filter((_, i) => i !== index);
+    setJobs(updatedJobs);
+    localStorage.setItem('jobs', JSON.stringify(updatedJobs)); // Save updated jobs
   };
 
   const addSchedule = (schedules: { date: string; startTime: string; endTime: string }[]) => {
@@ -39,18 +62,27 @@ const JobTracker: React.FC = () => {
   };
 
   const editSchedule = (jobIndex: number, scheduleIndex: number) => {
-    setSelectedJobIndex(jobIndex);
-    setSelectedScheduleIndex(scheduleIndex);
-    setShowEditModal(true);
+    const scheduleToEdit = jobs[jobIndex].schedules?.[scheduleIndex];
+    if (scheduleToEdit) {
+      setEditedSchedule(scheduleToEdit); // Set the schedule to be edited
+      setSelectedJobIndex(jobIndex); // Set the job index
+      setShowEditScheduleModal(true); // Show the edit modal
+    }
   };
 
-  const handleEditScheduleSave = (updatedSchedule: { date: string; startTime: string; endTime: string }) => {
-    if (selectedJobIndex !== null && selectedScheduleIndex !== null) {
+  const saveEditedSchedule = (date: string, startTime: string, endTime: string) => {
+    if (selectedJobIndex !== null && editedSchedule) {
       const updatedJobs = [...jobs];
-      updatedJobs[selectedJobIndex].schedules![selectedScheduleIndex] = updatedSchedule; // Update the schedule
+      updatedJobs[selectedJobIndex] = {
+        ...updatedJobs[selectedJobIndex],
+        schedules: updatedJobs[selectedJobIndex].schedules?.map((schedule) =>
+          schedule === editedSchedule ? { date, startTime, endTime } : schedule
+        ),
+      };
       setJobs(updatedJobs);
     }
-    setShowEditModal(false); // Close edit modal
+    setShowEditScheduleModal(false);
+    setEditedSchedule(null); // Clear edited schedule
   };
 
   const deleteSchedule = (jobIndex: number, scheduleIndex: number) => {
@@ -92,6 +124,7 @@ const JobTracker: React.FC = () => {
             }}
             onEditSchedule={editSchedule}
             onDeleteSchedule={deleteSchedule}
+            onDeleteJob={() => deleteJob(index)} 
           />
         ))}
       </div>
@@ -99,15 +132,13 @@ const JobTracker: React.FC = () => {
       {/* Modal for Schedule Form */}
       <ScheduleModal show={showScheduleModal} toggle={() => setShowScheduleModal(false)} addSchedule={addSchedule} />
 
-      {/* Modal for Edit Schedule */}
-      {selectedJobIndex !== null && selectedScheduleIndex !== null && (
-        <EditScheduleModal
-          show={showEditModal}
-          toggle={() => setShowEditModal(false)}
-          schedule={jobs[selectedJobIndex].schedules![selectedScheduleIndex]}
-          onSave={handleEditScheduleSave}
-        />
-      )}
+      {/* Modal for Editing Schedule */}
+      <EditScheduleModal
+        show={showEditScheduleModal}
+        toggle={() => setShowEditScheduleModal(false)}
+        editedSchedule={editedSchedule}
+        saveEditedSchedule={saveEditedSchedule}
+      />
     </div>
   );
 };

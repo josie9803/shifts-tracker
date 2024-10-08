@@ -1,22 +1,35 @@
 // src/components/EditScheduleModal.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface EditScheduleModalProps {
   show: boolean;
   toggle: () => void;
-  schedule: { date: string; startTime: string; endTime: string };
-  onSave: (updatedSchedule: { date: string; startTime: string; endTime: string }) => void;
+  saveEditedSchedule: (date: string, startTime: string, endTime: string) => void;
+  editedSchedule: { date: string; startTime: string; endTime: string } | null;
 }
 
-const EditScheduleModal: React.FC<EditScheduleModalProps> = ({ show, toggle, schedule, onSave }) => {
-  const [date, setDate] = useState(schedule.date);
-  const [startTime, setStartTime] = useState(schedule.startTime);
-  const [endTime, setEndTime] = useState(schedule.endTime);
+const EditScheduleModal: React.FC<EditScheduleModalProps> = ({
+  show,
+  toggle,
+  saveEditedSchedule,
+  editedSchedule,
+}) => {
+  const [date, setDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+
+  useEffect(() => {
+    if (editedSchedule) {
+      setDate(editedSchedule.date);
+      setStartTime(editedSchedule.startTime);
+      setEndTime(editedSchedule.endTime);
+    }
+  }, [editedSchedule]);
 
   const handleSave = () => {
-    onSave({ date, startTime, endTime });
-    toggle(); // Close the modal
+    saveEditedSchedule(date, startTime, endTime);
+    toggle(); // Close the modal after saving
   };
 
   if (!show) return null;
@@ -24,42 +37,52 @@ const EditScheduleModal: React.FC<EditScheduleModalProps> = ({ show, toggle, sch
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <div className="bg-white p-6 rounded shadow-lg max-w-lg w-full">
-        <button className="text-red-500 float-right" onClick={toggle}>
-          &times;
-        </button>
+        <h2 className="text-xl font-semibold mb-4">Edit Schedule</h2>
 
-        <h2 className="text-xl mb-4">Edit Schedule</h2>
-        <label>
-          Date:
+        <div className="mb-4">
+          <label className="block text-sm font-semibold mb-2">Date:</label>
           <input
-            type="text"
+            type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="border rounded p-1 w-full"
+            className="w-full border border-gray-300 rounded p-2"
           />
-        </label>
-        <label className="mt-2">
-          Start Time:
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-semibold mb-2">Start Time:</label>
           <input
-            type="text"
+            type="time"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
-            className="border rounded p-1 w-full"
+            className="w-full border border-gray-300 rounded p-2"
           />
-        </label>
-        <label className="mt-2">
-          End Time:
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-semibold mb-2">End Time:</label>
           <input
-            type="text"
+            type="time"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
-            className="border rounded p-1 w-full"
+            className="w-full border border-gray-300 rounded p-2"
           />
-        </label>
+        </div>
 
-        <button onClick={handleSave} className="mt-4 bg-blue-500 text-white p-2 rounded">
-          Save
-        </button>
+        <div className="flex justify-end">
+          <button
+            onClick={toggle}
+            className="bg-red-500 text-white px-4 py-2 rounded mr-2"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Save
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,58 +1,68 @@
 // src/components/JobCard.tsx
 
 import React from 'react';
-
-interface Schedule {
-  date: string;
-  startTime: string;
-  endTime: string;
-}
+import { JobEntry } from './JobTracker';
 
 interface JobCardProps {
-  job: {
-    jobName: string;
-    companyName: string;
-    hourlyRate: number;
-    schedules?: Schedule[];
-  };
+  job: JobEntry;
   index: number;
   onAddSchedule: (index: number) => void;
   onEditSchedule: (jobIndex: number, scheduleIndex: number) => void;
   onDeleteSchedule: (jobIndex: number, scheduleIndex: number) => void;
+  onDeleteJob: () => void;
 }
 
-const JobCard: React.FC<JobCardProps> = ({ job, index, onAddSchedule, onEditSchedule, onDeleteSchedule }) => {
+const JobCard: React.FC<JobCardProps> = ({
+  job,
+  index,
+  onAddSchedule,
+  onEditSchedule,
+  onDeleteSchedule,
+  onDeleteJob,
+}) => {
   return (
-    <div className="border p-4 rounded shadow hover:shadow-lg transition-shadow">
-      <h3 className="text-lg font-semibold">{job.jobName}</h3>
+    <div className="bg-white shadow-lg p-4 rounded-lg">
+      <h3 className="text-xl font-bold mb-2">{job.jobName}</h3>
       <p className="text-gray-600">Company: {job.companyName}</p>
-      <p className="text-gray-500">Hourly Rate: ${job.hourlyRate}/hour</p>
-      <button
-        className="mt-2 bg-blue-500 text-white rounded p-2"
-        onClick={() => onAddSchedule(index)} 
-      >
-        Add Schedule for This Week
-      </button>
+      <p className="text-gray-600">Hourly Rate: ${job.hourlyRate.toFixed(2)}</p>
+      <div className="mt-4">
+        <h4 className="text-lg font-semibold mb-2">Schedules:</h4>
+        {/* Display Schedules */}
+        {job.schedules && job.schedules.length > 0 ? (
+          job.schedules.map((schedule, scheduleIndex) => (
+            <div key={scheduleIndex} className="border p-2 mb-2 rounded">
+              <p>Date: {schedule.date}</p>
+              <p>Start Time: {schedule.startTime}</p>
+              <p>End Time: {schedule.endTime}</p>
 
-      {/* Display Schedules */}
-      {job.schedules && job.schedules.length > 0 && (
-        <div className="mt-4">
-          <h4 className="font-semibold">Schedules:</h4>
-          <ul className="list-disc list-inside">
-            {job.schedules.map((schedule, scheduleIndex) => (
-              <li key={scheduleIndex} className="flex justify-between">
-                <span>
-                  {schedule.date} ({new Date(schedule.date).toLocaleString('default', { weekday: 'long', month: 'short', day: 'numeric' })}): {schedule.startTime} - {schedule.endTime}
-                </span>
-                <div className="flex space-x-2">
-                  <button onClick={() => onEditSchedule(index, scheduleIndex)} className="text-blue-500">Edit</button>
-                  <button onClick={() => onDeleteSchedule(index, scheduleIndex)} className="text-red-500">Delete</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+              <div className="flex justify-between mt-2">
+                <button
+                  onClick={() => onEditSchedule(index, scheduleIndex)}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => onDeleteSchedule(index, scheduleIndex)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-600">No schedules added yet.</p>
+        )}
+
+      <button
+        onClick={() => onAddSchedule(index)}
+        className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+      >
+        Add Schedule
+      </button>
+      </div>
+      <button onClick={onDeleteJob} className="text-red-500">Delete Job</button>
     </div>
   );
 };
